@@ -1,7 +1,7 @@
 import * as Yup from 'yup';
 import Recipient from '../models/Recipient';
 
-class RecipientsController {
+class RecipientController {
   async index(req, res) {
     const { page = 1 } = req.query;
 
@@ -117,4 +117,4 @@ class RecipientsController {
   }
 }
 
-export default new RecipientsController();
+export default new RecipientController();
