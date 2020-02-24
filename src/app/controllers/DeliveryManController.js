@@ -1,12 +1,12 @@
 import * as Yup from 'yup';
-import Deliver from '../models/Deliver';
+import DeliveryMan from '../models/DeliveryMan';
 import File from '../models/File';
 
-class DeliverController {
+class DeliveryManController {
   async index(req, res) {
     const { page = 1 } = req.query;
 
-    const delivers = await Deliver.findAll({
+    const delivers = await DeliveryMan.findAll({
       order: ['id'],
       attributes: ['id', 'name', 'email'],
       include: [
@@ -35,7 +35,7 @@ class DeliverController {
       return res.status(400).json({ error: 'Validação de campos inválida.' });
     }
 
-    const { id, name, email } = await Deliver.create(req.body);
+    const { id, name, email } = await DeliveryMan.create(req.body);
 
     return res.json({
       id,
@@ -54,7 +54,7 @@ class DeliverController {
       return res.status(400).json({ error: 'Validação de campos inválida.' });
     }
 
-    const deliver = await Deliver.findByPk(req.params.id);
+    const deliver = await DeliveryMan.findByPk(req.params.id);
 
     if (!deliver) {
       return res
@@ -72,7 +72,7 @@ class DeliverController {
   }
 
   async delete(req, res) {
-    const deliver = await Deliver.findByPk(req.params.id);
+    const deliver = await DeliveryMan.findByPk(req.params.id);
 
     if (!deliver) {
       return res
@@ -86,4 +86,4 @@ class DeliverController {
   }
 }
 
-export default new DeliverController();
+export default new DeliveryManController();
