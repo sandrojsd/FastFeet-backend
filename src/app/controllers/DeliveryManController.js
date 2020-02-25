@@ -1,11 +1,12 @@
 import * as Yup from 'yup';
 import DeliveryMan from '../models/DeliveryMan';
+import Order from '../models/Order';
+import Recipient from '../models/Recipient';
 import File from '../models/File';
 
 class DeliveryManController {
   async index(req, res) {
     const { page = 1 } = req.query;
-
     const delivers = await DeliveryMan.findAll({
       order: ['id'],
       attributes: ['id', 'name', 'email'],
@@ -83,6 +84,48 @@ class DeliveryManController {
     await deliver.destroy();
 
     return res.json({ success: 'Destinatário excluído com sucesso!' });
+  }
+
+  async deliveries(req, res) {
+    const { page = 1 } = req.query;
+
+    const orders = await Order.findAll({
+      order: ['id'],
+      attributes: ['id', 'product', 'start_date', 'end_date', 'canceled_at'],
+      include: [
+        {
+          model: File,
+          as: 'signature',
+          attributes: ['name', 'path', 'url'],
+        },
+        {
+          model: DeliveryMan,
+          where: {
+            id: req.params.id,
+          },
+          as: 'deliveryman',
+          attributes: ['id', 'name', 'email'],
+        },
+        {
+          model: Recipient,
+          as: 'recipient',
+          attributes: [
+            'id',
+            'name',
+            'street',
+            'number',
+            'complement',
+            'city',
+            'state',
+            'zip_code',
+          ],
+        },
+      ],
+      limit: 20,
+      offset: (page - 1) * 20,
+    });
+
+    return res.json(orders);
   }
 }
 
