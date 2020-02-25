@@ -83,46 +83,58 @@ class OrderController {
     return res.json(order);
   }
 
-  // async update(req, res) {
-  //   const schema = Yup.object().shape({
-  //     name: Yup.string(),
-  //     email: Yup.string().email(),
-  //   });
+  async update(req, res) {
+    const schema = Yup.object().shape({
+      product: Yup.string(),
+      recipient_id: Yup.number(),
+      deliveryman_id: Yup.number(),
+    });
 
-  //   if (!(await schema.isValid(req.body))) {
-  //     return res.status(400).json({ error: 'Validação de campos inválida.' });
-  //   }
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validação de campos inválida.' });
+    }
 
-  //   const deliver = await Order.findByPk(req.params.id);
+    const order = await Order.findOne({
+      where: {
+        id: req.params.id,
+        canceled_at: null,
+        start_date: null,
+        end_date: null,
+      },
+    });
 
-  //   if (!deliver) {
-  //     return res
-  //       .status(400)
-  //       .json({ error: 'Não consegui encontrar o entregador solicitado' });
-  //   }
+    if (!order) {
+      return res
+        .status(400)
+        .json({ error: 'Não consegui encontrar o entregador solicitado' });
+    }
 
-  //   const { id, name, email } = await deliver.update(req.body);
+    await order.update(req.body);
 
-  //   return res.json({
-  //     id,
-  //     name,
-  //     email,
-  //   });
-  // }
+    return res.json(order);
+  }
 
-  // async delete(req, res) {
-  //   const deliver = await Order.findByPk(req.params.id);
+  async delete(req, res) {
+    const order = await Order.findByPk(req.params.id);
 
-  //   if (!deliver) {
-  //     return res
-  //       .status(401)
-  //       .json({ error: 'Não encontrei o entregador solicitado' });
-  //   }
+    if (!order) {
+      return res
+        .status(401)
+        .json({ error: 'Não encontrei o pedido solicitado' });
+    }
 
-  //   await deliver.destroy();
+    if (order.start_date !== null) {
+      return res.status(401).json({
+        error: 'O pedido não pode ser cancelado porque já saiu para entrega',
+      });
+    }
 
-  //   return res.json({ success: 'Destinatário excluído com sucesso!' });
-  // }
+    order.canceled_at = new Date();
+
+    await order.save();
+
+    return res.json({ success: 'Pedido cancelado com sucesso!' });
+  }
 }
 
 export default new OrderController();
