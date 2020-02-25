@@ -9,3 +9,7 @@ Você deverá criar a aplicação do zero utilizando o Express, além de precisa
 - Sucrase + Nodemon;
 - ESLint + Prettier + EditorConfig;
 - Sequelize (Utilizando PostgreSQL);
+- Redis
+- bee-queue
+- nodemailer
+- handlebars
