@@ -1,0 +1,23 @@
+<p>Olá, {{ deliveryMan }}, precisamos da ajuda!</p>
+<p>Um novo pedido foi criado e você foi selecionado para realizar a entrega. Dá uma olhada abaixo e veja quem deve receber.</p>
+
+<ul style="display: list-item;list-style: none;">
+  <li><strong>Destinatário: </strong>{{ name }}</li>
+  <li><strong>Produto: </strong>{{ product }}</li>
+  <li><strong>Endereço</strong></li>
+  <li>
+    <ul style="display: list-item;list-style: none;margin-left: 10px;">
+      <li><strong>Rua: </strong>{{ street }}</li>
+      <li><strong>Número: </strong>{{ number }}</li>
+      <li><strong>Complemento: </strong>{{ complement }}</li>
+      <li><strong>Cidade: </strong>{{ city }}, {{ state }}</li>
+      <li><strong>CEP: </strong> {{ zip_code }}</li>
+    </ul>
+  </li>
+
+</ul>
+
+<p>Qualquer dúvida, entre em contado conosco pelo número 69 98132-3030</p>
+
+<p>Porto Velho, {{ date }}</p>
+

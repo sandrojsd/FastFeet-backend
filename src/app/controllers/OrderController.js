@@ -4,6 +4,9 @@ import Recipient from '../models/Recipient';
 import DeliveryMan from '../models/DeliveryMan';
 import File from '../models/File';
 
+import OrderMail from '../jobs/OrderMail';
+import Queue from '../../lib/Queue';
+
 class OrderController {
   async index(req, res) {
     const { page = 1 } = req.query;
@@ -68,6 +71,14 @@ class OrderController {
     }
 
     const order = await Order.create(req.body);
+
+    if (order) {
+      await Queue.add(OrderMail.key, {
+        order,
+        recipient,
+        deliveyman,
+      });
+    }
 
     return res.json(order);
   }
