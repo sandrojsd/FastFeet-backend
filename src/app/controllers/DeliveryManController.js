@@ -2,7 +2,7 @@ import * as Yup from 'yup';
 import { Op } from 'sequelize';
 import { startOfDay, endOfDay } from 'date-fns';
 import DeliveryMan from '../models/DeliveryMan';
-import Order from '../models/Order';
+import Delivery from '../models/Delivery';
 import Recipient from '../models/Recipient';
 import File from '../models/File';
 
@@ -10,7 +10,7 @@ class DeliveryManController {
   async index(req, res) {
     const { page = 1 } = req.query;
     const delivers = await DeliveryMan.findAll({
-      order: ['id'],
+      delivery: ['id'],
       attributes: ['id', 'name', 'email'],
       include: [
         {
@@ -57,15 +57,15 @@ class DeliveryManController {
       return res.status(400).json({ error: 'Validação de campos inválida.' });
     }
 
-    const deliver = await DeliveryMan.findByPk(req.params.id);
+    const delivery = await DeliveryMan.findByPk(req.params.id);
 
-    if (!deliver) {
+    if (!delivery) {
       return res
         .status(400)
         .json({ error: 'Não consegui encontrar o entregador solicitado' });
     }
 
-    const { id, name, email } = await deliver.update(req.body);
+    const { id, name, email } = await delivery.update(req.body);
 
     return res.json({
       id,
@@ -75,15 +75,15 @@ class DeliveryManController {
   }
 
   async delete(req, res) {
-    const deliver = await DeliveryMan.findByPk(req.params.id);
+    const delivery = await DeliveryMan.findByPk(req.params.id);
 
-    if (!deliver) {
+    if (!delivery) {
       return res
         .status(401)
         .json({ error: 'Não encontrei o entregador solicitado' });
     }
 
-    await deliver.destroy();
+    await delivery.destroy();
 
     return res.json({ success: 'Destinatário excluído com sucesso!' });
   }
@@ -91,8 +91,8 @@ class DeliveryManController {
   async deliveries(req, res) {
     const { page = 1 } = req.query;
 
-    const orders = await Order.findAll({
-      order: ['id'],
+    const deliverys = await Delivery.findAll({
+      delivery: ['id'],
       attributes: ['id', 'product', 'start_date', 'end_date', 'canceled_at'],
       include: [
         {
@@ -127,19 +127,19 @@ class DeliveryManController {
       offset: (page - 1) * 20,
     });
 
-    return res.json(orders);
+    return res.json(deliverys);
   }
 
   async completedDeliveries(req, res) {
     const { page = 1 } = req.query;
 
-    const orders = await Order.findAll({
+    const deliverys = await Delivery.findAll({
       where: {
         end_date: {
           [Op.ne]: null,
         },
       },
-      order: ['id'],
+      delivery: ['id'],
       attributes: ['id', 'product', 'start_date', 'end_date', 'canceled_at'],
       include: [
         {
@@ -174,11 +174,11 @@ class DeliveryManController {
       offset: (page - 1) * 20,
     });
 
-    return res.json(orders);
+    return res.json(deliverys);
   }
 
   async startDelivery(req, res) {
-    const { date } = req.query;
+    const { date, deliveryId } = req.query;
 
     if (!date) {
       return res.status(400).json({ eror: 'Informe uma data' });
@@ -187,7 +187,7 @@ class DeliveryManController {
     // transforma o date em inteiro, tbm poderia usar o parseInt()
     const searchDate = Number(date);
 
-    const withdrawalsOders = await Order.findAll({
+    const withdrawalsDeliveries = await Delivery.findAll({
       where: {
         start_date: {
           [Op.ne]: null,
@@ -205,7 +205,7 @@ class DeliveryManController {
       ],
     });
 
-    if ((await withdrawalsOders).valueOf() === 5) {
+    if ((await withdrawalsDeliveries).valueOf() === 5) {
       return res.status(401).json({
         error: 'Você já fez as 5 entregas permitidas para hoje.',
       });
@@ -220,17 +220,26 @@ class DeliveryManController {
       });
     }
 
-    return res.json(withdrawalsOders.length);
+    const delivery = await Delivery.findByPk(deliveryId);
+
+    if (!delivery) {
+      return res.status(401).json({ error: 'Pedido não encontrado' });
+    }
+
+    delivery.start_date = new Date();
+    await delivery.save();
+
+    return res.json(delivery);
   }
 
   async FinishDelivery(req, res) {
     const { originalname: name, filename: path } = req.file;
 
-    const { order_id } = req.query;
+    const { delivery_id } = req.query;
 
-    const order = await Order.findOne({
+    const delivery = await Delivery.findOne({
       where: {
-        id: order_id,
+        id: delivery_id,
         start_date: {
           [Op.ne]: null,
         },
@@ -254,7 +263,7 @@ class DeliveryManController {
       ],
     });
 
-    if (!order) {
+    if (!delivery) {
       return res.json({ error: 'Pedido não encontrado, ou já foi finalizado' });
     }
 
@@ -263,13 +272,12 @@ class DeliveryManController {
       path,
     });
 
-    order.signature_id = id;
-    order.end_date = new Date();
+    delivery.signature_id = id;
+    delivery.end_date = new Date();
 
-    order.save();
-    order.reload();
+    delivery.save();
 
-    return res.json(order);
+    return res.json(delivery);
   }
 }
 

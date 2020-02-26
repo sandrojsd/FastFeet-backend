@@ -3,22 +3,22 @@ import { format, parseISO } from 'date-fns';
 import pt from 'date-fns/locale/pt';
 import Mail from '../../lib/Mail';
 
-class OrderMail {
+class DeliveryMail {
   get key() {
-    return 'OrderMail';
+    return 'Delivery';
   }
 
   // handle é o método que executa o job
   async handle({ data }) {
-    const { order, recipient, deliveyman } = data;
+    const { delivery, recipient, deliveyman } = data;
 
     await Mail.sendMail({
       to: `${deliveyman.name} <${deliveyman.email}>`,
       subject: 'Solicitação de entrega de pedido.',
-      template: 'order',
+      template: 'delivery',
       context: {
         deliveryMan: deliveyman.name,
-        product: order.product,
+        product: delivery.product,
         name: recipient.name,
         street: recipient.street,
         number: recipient.number,
@@ -27,7 +27,7 @@ class OrderMail {
         state: recipient.state,
         zip_code: recipient.zip_code,
         date: format(
-          parseISO(order.createdAt),
+          parseISO(delivery.createdAt),
           "'dia' dd 'de' MMMM', às' H:mm'h'",
           {
             locale: pt,
@@ -38,4 +38,4 @@ class OrderMail {
   }
 }
 
-export default new OrderMail();
+export default new DeliveryMail();

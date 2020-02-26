@@ -6,7 +6,7 @@ class RecipientController {
     const { page = 1 } = req.query;
 
     const recipients = await Recipient.findAll({
-      order: ['id'],
+      delivery: ['id'],
       attributes: [
         'id',
         'name',
