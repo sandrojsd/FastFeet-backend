@@ -1,4 +1,5 @@
 import * as Yup from 'yup';
+import { Op } from 'sequelize';
 import DeliveryMan from '../models/DeliveryMan';
 import Order from '../models/Order';
 import Recipient from '../models/Recipient';
@@ -90,6 +91,53 @@ class DeliveryManController {
     const { page = 1 } = req.query;
 
     const orders = await Order.findAll({
+      order: ['id'],
+      attributes: ['id', 'product', 'start_date', 'end_date', 'canceled_at'],
+      include: [
+        {
+          model: File,
+          as: 'signature',
+          attributes: ['name', 'path', 'url'],
+        },
+        {
+          model: DeliveryMan,
+          where: {
+            id: req.params.id,
+          },
+          as: 'deliveryman',
+          attributes: ['id', 'name', 'email'],
+        },
+        {
+          model: Recipient,
+          as: 'recipient',
+          attributes: [
+            'id',
+            'name',
+            'street',
+            'number',
+            'complement',
+            'city',
+            'state',
+            'zip_code',
+          ],
+        },
+      ],
+      limit: 20,
+      offset: (page - 1) * 20,
+    });
+
+    return res.json(orders);
+  }
+
+  async completedDeliveries(req, res) {
+    const { page = 1 } = req.query;
+
+    const orders = await Order.findAll({
+      where: {
+        end_date: {
+          [Op.ne]: null,
+        },
+      },
       order: ['id'],
       attributes: ['id', 'product', 'start_date', 'end_date', 'canceled_at'],
       include: [
