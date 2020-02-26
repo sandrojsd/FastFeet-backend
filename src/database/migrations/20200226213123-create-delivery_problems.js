@@ -11,6 +11,13 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      delivery_id: {
+        type: Sequelize.INTEGER,
+        references: { model: 'deliveries', key: 'id' },
+        onUpadte: 'CASCADE',
+        onDelete: 'SET NULL',
+        allowNull: false,
+      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,

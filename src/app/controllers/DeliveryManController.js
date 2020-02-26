@@ -2,6 +2,7 @@ import * as Yup from 'yup';
 import { Op } from 'sequelize';
 import { startOfDay, endOfDay } from 'date-fns';
 import DeliveryMan from '../models/DeliveryMan';
+import DeliveryProblem from '../models/DeliveryProblem';
 import Delivery from '../models/Delivery';
 import Recipient from '../models/Recipient';
 import File from '../models/File';
@@ -278,6 +279,29 @@ class DeliveryManController {
     delivery.save();
 
     return res.json(delivery);
+  }
+
+  async problems(req, res) {
+    const schema = Yup.object().shape({
+      description: Yup.string().required(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validação de campos inválida.' });
+    }
+
+    const delivery_id = req.params.id;
+    const { description } = req.body;
+
+    const { id } = await DeliveryProblem.create({
+      description,
+      delivery_id,
+    });
+
+    return res.json({
+      id,
+      description,
+    });
   }
 }
 

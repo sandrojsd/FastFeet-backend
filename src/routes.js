@@ -42,10 +42,18 @@ routes.post(
   DeliveryManController.FinishDelivery
 );
 
+routes.post(
+  '/deliverman/:id/problems',
+  upload.single('file'),
+  DeliveryManController.problems
+);
+
 routes.get('/deliveries', DeliveryController.index);
 routes.post('/deliveries', DeliveryController.store);
 routes.put('/deliveries/:id', DeliveryController.update);
 routes.delete('/deliveries/:id', DeliveryController.delete);
+routes.get('/deliveries/:id/problems', DeliveryController.problems);
+routes.post('/problem/:id/cancel-delivery', DeliveryController.cancelDeliVery);
 
 routes.post('/files', upload.single('file'), FileController.store);
 

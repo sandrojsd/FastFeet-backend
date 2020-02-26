@@ -2,6 +2,7 @@ import * as Yup from 'yup';
 import Delivery from '../models/Delivery';
 import Recipient from '../models/Recipient';
 import DeliveryMan from '../models/DeliveryMan';
+import DeliveryProblem from '../models/DeliveryProblem';
 import File from '../models/File';
 
 import DeliveryMail from '../jobs/DeliveryMail';
@@ -129,11 +130,71 @@ class DeliveryController {
       });
     }
 
+    await delivery.destroy();
+
+    return res.json({ success: 'Pedido excluído com sucesso!' });
+  }
+
+  async problems(req, res) {
+    const problems = await DeliveryProblem.findAll({
+      attributes: ['id', 'description'],
+      include: [
+        {
+          model: Delivery,
+          as: 'delivery',
+          where: {
+            id: req.params.id,
+          },
+          attributes: [
+            'id',
+            'product',
+            'start_date',
+            'end_date',
+            'canceled_at',
+          ],
+          include: [
+            {
+              model: Recipient,
+              as: 'recipient',
+              attributes: [
+                'id',
+                'name',
+                'street',
+                'number',
+                'complement',
+                'state',
+                'city',
+                'zip_code',
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    return res.json(problems);
+  }
+
+  async cancelDeliVery(req, res) {
+    const problem = await DeliveryProblem.findByPk(req.params.id);
+
+    if (!problem) {
+      return res.status(401).json({ error: 'Problema não encontrado' });
+    }
+
+    const delivery = await Delivery.findByPk(problem.delivery_id);
+
+    if (!delivery) {
+      return res.status(401).json({ error: 'Perido não encontrado.' });
+    }
+
     delivery.canceled_at = new Date();
 
-    await delivery.save();
+    delivery.save();
 
-    return res.json({ success: 'Pedido cancelado com sucesso!' });
+    return res.json({
+      success: `Pedido ${delivery.id}, cancelado com sucesso.`,
+    });
   }
 }
 
