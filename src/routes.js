@@ -31,6 +31,16 @@ routes.get(
   '/deliverman/:id/completedDeliveries',
   DeliveryManController.completedDeliveries
 );
+routes.post(
+  '/deliverman/:id/startDelivery',
+  DeliveryManController.startDelivery
+);
+
+routes.post(
+  '/deliverman/:id/FinishDelivery',
+  upload.single('file'),
+  DeliveryManController.FinishDelivery
+);
 
 routes.get('/orders', OrderController.index);
 routes.post('/orders', OrderController.store);

@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 import { Op } from 'sequelize';
+import { startOfDay, endOfDay } from 'date-fns';
 import DeliveryMan from '../models/DeliveryMan';
 import Order from '../models/Order';
 import Recipient from '../models/Recipient';
@@ -174,6 +175,101 @@ class DeliveryManController {
     });
 
     return res.json(orders);
+  }
+
+  async startDelivery(req, res) {
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ eror: 'Informe uma data' });
+    }
+
+    // transforma o date em inteiro, tbm poderia usar o parseInt()
+    const searchDate = Number(date);
+
+    const withdrawalsOders = await Order.findAll({
+      where: {
+        start_date: {
+          [Op.ne]: null,
+          [Op.between]: [startOfDay(searchDate), endOfDay(searchDate)],
+        },
+      },
+      include: [
+        {
+          model: DeliveryMan,
+          where: {
+            id: req.params.id,
+          },
+          as: 'deliveryman',
+        },
+      ],
+    });
+
+    if ((await withdrawalsOders).valueOf() === 5) {
+      return res.status(401).json({
+        error: 'Você já fez as 5 entregas permitidas para hoje.',
+      });
+    }
+
+    const searchHour = new Date().getHours();
+
+    if (!(searchHour >= 8 && searchHour <= 18)) {
+      return res.status(401).json({
+        error:
+          'Aviso: tentativa de retirada de pedido fora do horário permitido(08:00 às 18:00)',
+      });
+    }
+
+    return res.json(withdrawalsOders.length);
+  }
+
+  async FinishDelivery(req, res) {
+    const { originalname: name, filename: path } = req.file;
+
+    const { order_id } = req.query;
+
+    const order = await Order.findOne({
+      where: {
+        id: order_id,
+        start_date: {
+          [Op.ne]: null,
+        },
+        end_date: null,
+        canceled_at: null,
+      },
+      attributes: ['id', 'product', 'start_date', 'end_date', 'signature_id'],
+      include: [
+        {
+          model: DeliveryMan,
+          as: 'deliveryman',
+          where: {
+            id: req.params.id,
+          },
+        },
+        {
+          model: File,
+          as: 'signature',
+          attributes: ['id', 'name', 'path', 'url'],
+        },
+      ],
+    });
+
+    if (!order) {
+      return res.json({ error: 'Pedido não encontrado, ou já foi finalizado' });
+    }
+
+    const { id } = await File.create({
+      name,
+      path,
+    });
+
+    order.signature_id = id;
+    order.end_date = new Date();
+
+    order.save();
+    order.reload();
+
+    return res.json(order);
   }
 }
 
