@@ -6,6 +6,7 @@ import DeliveryProblem from '../models/DeliveryProblem';
 import File from '../models/File';
 
 import DeliveryMail from '../jobs/DeliveryMail';
+import DeliveryCanceledMail from '../jobs/DeliveryCanceledMail';
 import Queue from '../../lib/Queue';
 
 class DeliveryController {
@@ -176,21 +177,29 @@ class DeliveryController {
   }
 
   async cancelDeliVery(req, res) {
-    const problem = await DeliveryProblem.findByPk(req.params.id);
+    const deliveryProblem = await DeliveryProblem.findByPk(req.params.id);
 
-    if (!problem) {
+    if (!deliveryProblem) {
       return res.status(401).json({ error: 'Problema não encontrado' });
     }
 
-    const delivery = await Delivery.findByPk(problem.delivery_id);
+    const delivery = await Delivery.findByPk(deliveryProblem.delivery_id);
 
     if (!delivery) {
       return res.status(401).json({ error: 'Perido não encontrado.' });
     }
 
+    const deliveyman = await DeliveryMan.findByPk(delivery.deliveryman_id);
+
     delivery.canceled_at = new Date();
 
     delivery.save();
+
+    await Queue.add(DeliveryCanceledMail.key, {
+      delivery,
+      deliveryProblem,
+      deliveyman,
+    });
 
     return res.json({
       success: `Pedido ${delivery.id}, cancelado com sucesso.`,
